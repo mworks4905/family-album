@@ -5,4 +5,5 @@ type Picture struct {
 	Title    string
 	Date     string
 	Category []string
+	Tags     []string
 }

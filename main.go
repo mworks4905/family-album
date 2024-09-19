@@ -12,25 +12,31 @@ import (
 	// "github.com/rs/zerolog/log"
 )
 
-type S3Client string
+type authed bool
 
-var s3Client S3Client = "S3"
+var isLoggedIn authed = false
 
 func main() {
+	ctx := context.Background()
 	configs.LoadEnvConfigs()
-	S3 := s3.InitClient()
 
+	// Start S3 client
+	s3Client := s3.NewClient(ctx)
+
+	// Create custom route handlers
+	getPicturesHandler := handlers.GetPictures{S3: s3Client}
+	getPictureHandler := handlers.GetPicture{S3: s3Client}
+
+	// Create router and handles
 	router := http.NewServeMux()
-
-	router.HandleFunc("GET /pictures", handlers.GetPictures)
-	router.HandleFunc("GET /picture/{id}", handlers.GetPicture)
+	router.Handle("GET /pictures", getPicturesHandler)
+	router.Handle("GET /picture/{fileName}", getPictureHandler)
 
 	server := http.Server{
 		Addr:    ":9000",
 		Handler: router,
 		BaseContext: func(l net.Listener) context.Context {
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, s3Client, S3)
+			ctx = context.WithValue(ctx, isLoggedIn, true)
 			return ctx
 		},
 	}

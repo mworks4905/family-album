@@ -16,9 +16,9 @@ type S3Client struct {
 	Bucket string
 }
 
-func InitClient() *S3Client {
+func NewClient(ctx context.Context) *S3Client {
 	// Load the Shared AWS Configuration (~/.aws/config)
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +57,8 @@ func (s *S3Client) Read(key string) *s3.GetObjectOutput {
 
 	output, err := s.Client.GetObject(context.TODO(), &input)
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
+		fmt.Printf("Error finding file: %v", err)
 	}
 
 	return output
