@@ -3,44 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
-	"net/http"
+	"log"
+	"os"
 
 	"github.com/mworks4905/family-album/configs"
-	"github.com/mworks4905/family-album/handlers"
-	"github.com/mworks4905/family-album/s3"
-	// "github.com/rs/zerolog/log"
+	"github.com/mworks4905/family-album/internal/s3"
+	"github.com/mworks4905/family-album/internal/server"
 )
-
-type authed bool
-
-var isLoggedIn authed = false
 
 func main() {
 	ctx := context.Background()
 	configs.LoadEnvConfigs()
 
 	// Start S3 client
-	s3Client := s3.NewClient(ctx)
+	s3.NewClient(ctx, os.Getenv("AWS_BUCKET"))
 
-	// Create custom route handlers
-	getPicturesHandler := handlers.GetPictures{S3: s3Client}
-	getPictureHandler := handlers.GetPicture{S3: s3Client}
-
-	// Create router and handles
-	router := http.NewServeMux()
-	router.Handle("GET /pictures", getPicturesHandler)
-	router.Handle("GET /picture/{fileName}", getPictureHandler)
-
-	server := http.Server{
-		Addr:    ":9000",
-		Handler: router,
-		BaseContext: func(l net.Listener) context.Context {
-			ctx = context.WithValue(ctx, isLoggedIn, true)
-			return ctx
-		},
-	}
-
+	// Start server
+	s := server.NewServer(":9000", ctx)
 	fmt.Println("Listening on port: 9000")
-	server.ListenAndServe()
+	log.Fatal(s.ListenAndServe())
 }

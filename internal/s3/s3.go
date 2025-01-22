@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -16,19 +15,19 @@ type S3Client struct {
 	Bucket string
 }
 
-func NewClient(ctx context.Context) *S3Client {
+var Client *S3Client
+
+func NewClient(ctx context.Context, bucket string) {
 	// Load the Shared AWS Configuration (~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	myS3 := S3Client{
+	Client = &S3Client{
 		Client: s3.NewFromConfig(cfg),
-		Bucket: os.Getenv("AWS_BUCKET"),
+		Bucket: bucket,
 	}
-
-	return &myS3
 }
 
 func (s *S3Client) List(prefix string) *s3.ListObjectsV2Output {
